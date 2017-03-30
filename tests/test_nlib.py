@@ -21,6 +21,19 @@ class TestNLib(unittest.TestCase):
         expected10 = 55
         self.assertEqual(expected10, result10)
 
+    def test086(self):
+        pat = [[[0, 0], [0]],
+               [[0, 1], [1]],
+               [[1, 0], [1]],
+               [[1, 1], [0]]]
+        n = nlib.NeuralNetwork(2, 2, 1)
+        n.train(pat)
+
+        for input_list, expected_list in pat:
+            result_list = n.update(input_list)
+            for expected_member, result_member in zip(expected_list, result_list):
+                self.assertAlmostEqual(expected_member, result_member, places=1)
+
 
 if __name__ == '__main__':
     unittest.main()
