@@ -20,7 +20,7 @@ class YStock:
         self.symbol = symbol.upper()
 
     def current(self):
-        import urllib
+        import urllib.request, urllib.parse, urllib.error
         FIELDS = (('price', 'l1'),
                   ('change', 'c1'),
                   ('volume', 'v'),
@@ -43,7 +43,7 @@ class YStock:
                   ('short_ratio', 's7'))
         columns = ''.join([row[1] for row in FIELDS])
         url = self.URL_CURRENT % dict(symbol=self.symbol, columns=columns)
-        raw_data = urllib.urlopen(url).read().strip().strip('"').split(',')
+        raw_data = urllib.request.urlopen(url).read().strip().strip('"').split(',')
         current = dict()
         for i,row in enumerate(FIELDS):
             try:
@@ -53,7 +53,7 @@ class YStock:
         return current
 
     def historical(self,start=None, stop=None):
-        import datetime, time, urllib, math
+        import datetime, time, urllib.request, urllib.parse, urllib.error, math
         start =  start or datetime.date(1900,1,1)
         stop = stop or datetime.date.today()
         url = self.URL_HISTORICAL % dict(
@@ -61,7 +61,7 @@ class YStock:
             a=start.month-1,b=start.day,c=start.year,
             d=stop.month-1,e=stop.day,f=stop.year)
         # Date,Open,High,Low,Close,Volume,Adj Close
-        lines = urllib.urlopen(url).readlines()
+        lines = urllib.request.urlopen(url).readlines()
         raw_data = [row.split(',') for row in lines[1:] if row.count(',')==6]
         previous_adjusted_close = 0
         series = []
@@ -101,7 +101,7 @@ class YStock:
 import os
 import uuid
 import sqlite3
-import cPickle as pickle
+import pickle as pickle
 import unittest
 
 class PersistentDictionary(object):
@@ -200,7 +200,7 @@ class PersistentDictionary(object):
 
     def loads(self, raw):
         data = self.serializer.loads(raw)
-        for key, value in data.iteritems():
+        for key, value in data.items():
             self[key] = value
 
 import math
@@ -210,7 +210,7 @@ import os
 import tempfile
 os.environ['MPLCONfigureDIR'] = tempfile.mkdtemp()
 
-from cStringIO import StringIO
+from io import StringIO
 try:
     from matplotlib.figure import Figure
     from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -258,10 +258,10 @@ class Canvas(object):
     def plot(self, data, color='blue', style='-', width=2,
              legend=None, xrange=None):
         if callable(data) and xrange:
-            x = [xrange[0]+0.01*i*(xrange[1]-xrange[0]) for i in xrange(0,101)]
+            x = [xrange[0]+0.01*i*(xrange[1]-xrange[0]) for i in range(0,101)]
             y = [data(p) for p in x]
         elif data and isinstance(data[0],(int,float)):
-            x, y = xrange(len(data)), data
+            x, y = range(len(data)), data
         else:
             x, y = [p[0] for p in data], [p[1] for p in data]
         q = self.ax.plot(x, y, linestyle=style, linewidth=width, color=color)
@@ -328,7 +328,7 @@ class memoize_persistent(object):
 def timef(f, ns=1000, dt = 60):
     import time
     t = t0 = time.time()
-    for k in xrange(1,ns):
+    for k in range(1,ns):
         f()
         t = time.time()
         if t-t0>dt: break
@@ -388,7 +388,7 @@ class DisjointSets(object):
         return self.counter
 
 def make_maze(n,d):
-    walls = [(i,i+n**j) for i in xrange(n**2) for j in xrange(d) if (i/n**j)%n+1<n]
+    walls = [(i,i+n**j) for i in range(n**2) for j in range(d) if (i/n**j)%n+1<n]
     torn_down_walls = []
     ds = DisjointSets(n**d)
     random.shuffle(walls)
@@ -469,7 +469,7 @@ def encode_huffman(input):
     for symbol in input:
         symbols[symbol] = symbols.get(symbol,0)+1
     heap = []
-    for (k,f) in symbols.items():
+    for (k,f) in list(symbols.items()):
         heappush(heap,(f,k))
     while len(heap)>1:
         (f1,k1) = heappop(heap)
@@ -481,9 +481,9 @@ def encode_huffman(input):
     return symbol_map, encoded
 
 def decode_huffman(keys, encoded):
-    reversed_map = dict((v,k) for (k,v) in keys.items())
+    reversed_map = dict((v,k) for (k,v) in list(keys.items()))
     i, output = 0, []
-    for j in xrange(1,len(encoded)+1):
+    for j in range(1,len(encoded)+1):
         if encoded[i:j] in reversed_map:
            output.append(reversed_map[encoded[i:j]])
            i=j
@@ -517,7 +517,7 @@ def needleman_wunsch(a,b,p=0.97):
     return z
 
 def continuum_knapsack(a,b,c):
-    table = [(a[i]/b[i],i) for i in xrange(len(a))]
+    table = [(a[i]/b[i],i) for i in range(len(a))]
     table.sort()
     table.reverse()
     f=0.0
@@ -535,8 +535,8 @@ class Cluster(object):
         self.w = weights or [1.0]*self.k
         self.q = dict((i,[i]) for i,e in enumerate(points))
         self.d = []
-        for i in xrange(self.k):
-            for j in xrange(i+1,self.k):
+        for i in range(self.k):
+            for j in range(i+1,self.k):
                 m = metric(points[i],points[j])
                 if not m is None:
                     self.d.append((m,i,j))
@@ -567,13 +567,13 @@ class Cluster(object):
                     old_d[h] = a+self.w[h]*r,b+self.w[h]
                 else:
                     new_d.append((r,h,k))
-            new_d += [(a/b,i,k) for k,(a,b) in old_d.items()]
+            new_d += [(a/b,i,k) for k,(a,b) in list(old_d.items())]
             new_d.sort()
             self.d = new_d
             # update weight of new cluster
             self.w[i] = self.w[i]+self.w[j]
             # get new list of cluster members
-            self.v = [s for s in self.q.values() if isinstance(s,list)]
+            self.v = [s for s in list(self.q.values()) if isinstance(s,list)]
             self.dd.append((self.r,len(self.v)))
         return self.r, self.v
 
@@ -633,17 +633,17 @@ class NeuralNetwork:
             raise ValueError('wrong number of inputs')
 
         # input activations
-        for i in xrange(self.ni-1):
+        for i in range(self.ni-1):
             self.ai[i] = inputs[i]
 
         # hidden activations
-        for j in xrange(self.nh):
-            s = sum(self.ai[i] * self.wi[i,j] for i in xrange(self.ni))
+        for j in range(self.nh):
+            s = sum(self.ai[i] * self.wi[i,j] for i in range(self.ni))
             self.ah[j] = self.sigmoid(s)
 
         # output activations
-        for k in xrange(self.no):
-            s = sum(self.ah[j] * self.wo[j,k] for j in xrange(self.nh))
+        for k in range(self.no):
+            s = sum(self.ah[j] * self.wo[j,k] for j in range(self.nh))
             self.ao[k] = self.sigmoid(s)
         return self.ao[:]
 
@@ -653,52 +653,52 @@ class NeuralNetwork:
 
         # calculate error terms for output
         output_deltas = [0.0] * self.no
-        for k in xrange(self.no):
+        for k in range(self.no):
             error = targets[k]-self.ao[k]
             output_deltas[k] = self.dsigmoid(self.ao[k]) * error
 
         # calculate error terms for hidden
         hidden_deltas = [0.0] * self.nh
-        for j in xrange(self.nh):
-            error = sum(output_deltas[k]*self.wo[j,k] for k in xrange(self.no))
+        for j in range(self.nh):
+            error = sum(output_deltas[k]*self.wo[j,k] for k in range(self.no))
             hidden_deltas[j] = self.dsigmoid(self.ah[j]) * error
 
         # update output weights
-        for j in xrange(self.nh):
-            for k in xrange(self.no):
+        for j in range(self.nh):
+            for k in range(self.no):
                 change = output_deltas[k]*self.ah[j]
                 self.wo[j,k] = self.wo[j,k] + N*change + M*self.co[j,k]
                 self.co[j,k] = change
                 #print N*change, M*self.co[j,k]
 
         # update input weights
-        for i in xrange(self.ni):
-            for j in xrange(self.nh):
+        for i in range(self.ni):
+            for j in range(self.nh):
                 change = hidden_deltas[j]*self.ai[i]
                 self.wi[i,j] = self.wi[i,j] + N*change + M*self.ci[i,j]
                 self.ci[i,j] = change
 
         # calculate error
-        error = sum(0.5*(targets[k]-self.ao[k])**2 for k in xrange(len(targets)))
+        error = sum(0.5*(targets[k]-self.ao[k])**2 for k in range(len(targets)))
         return error
 
     def test(self, patterns):
         for p in patterns:
-            print p[0], '->', self.update(p[0])
+            print(p[0], '->', self.update(p[0]))
 
     def weights(self):
-        print 'Input weights:'
-        for i in xrange(self.ni):
-            print self.wi[i]
-        print
-        print 'Output weights:'
-        for j in xrange(self.nh):
-            print self.wo[j]
+        print('Input weights:')
+        for i in range(self.ni):
+            print(self.wi[i])
+        print()
+        print('Output weights:')
+        for j in range(self.nh):
+            print(self.wo[j])
 
     def train(self, patterns, iterations=1000, N=0.5, M=0.1, check=False):
         # N: learning rate
         # M: momentum factor
-        for i in xrange(iterations):
+        for i in range(iterations):
             error = 0.0
             for p in patterns:
                 inputs = p[0]
@@ -706,7 +706,7 @@ class NeuralNetwork:
                 self.update(inputs)
                 error = error + self.back_propagate(targets, N, M)
             if check and i % 100 == 0:
-                print 'error %-14f' % error
+                print('error %-14f' % error)
 
 def D(f,h=1e-6): # first derivative of f
     return lambda x,f=f,h=h: (f(x+h)-f(x-h))/2/h
@@ -721,7 +721,7 @@ def myexp(x,precision=1e-6,max_steps=40):
        return 1.0/myexp(-x,precision,max_steps)
     else:
        t = s = 1.0 # first term
-       for k in xrange(1,max_steps):
+       for k in range(1,max_steps):
            t = t*x/k   # next term
            s = s + t   # add next term
            if abs(t)<precision: return s
@@ -743,7 +743,7 @@ def mysin(x,precision=1e-6,max_steps=40):
        return sqrt(1.0-mysin(pi/2-x)**2)
     else:
        t = s = x                     # first term
-       for k in xrange(1,max_steps):
+       for k in range(1,max_steps):
            t = t*(-1.0)*x*x/(2*k)/(2*k+1)   # next term
            s = s + t                 # add next term
            r = x**(2*k+1)            # estimate residue
@@ -766,7 +766,7 @@ def mycos(x,precision=1e-6,max_steps=40):
        return sqrt(1.0-mycos(pi/2-x)**2)
     else:
        t = s = 1                     # first term
-       for k in xrange(1,max_steps):
+       for k in range(1,max_steps):
            t = t*(-1.0)*x*x/(2*k)/(2*k-1)   # next term
            s = s + t                 # add next term
            r = x**(2*k)              # estimate residue
@@ -790,7 +790,7 @@ class Matrix(object):
             else:
                 self.rows = [[e] for e in rows]
         elif isinstance(rows,int) and isinstance(cols,int):
-            xrows, xcols = xrange(rows), xrange(cols)
+            xrows, xcols = range(rows), range(cols)
             if callable(fill):
                 self.rows = [[fill(r,c) for c in xcols] for r in xrows]
             else:
@@ -819,7 +819,7 @@ class Matrix(object):
 
     def flatten(A):
         " assert(Matrix([[1,2],[3,4]]).flatten() == [1,2,3,4]) "
-        return [A[r,c] for r in xrange(A.nrows) for c in xrange(A.ncols)]
+        return [A[r,c] for r in range(A.nrows) for c in range(A.ncols)]
 
     def reshape(A,n,m):
         " assert(Matrix([[1,2],[3,4]]).reshape(1,4).tolist() == [[1,2,3,4]]) "
@@ -855,12 +855,12 @@ class Matrix(object):
             if n==m:
                 B = Matrix.identity(n,B)
             elif n==1 or m==1:
-                B = Matrix([[B for c in xrange(m)] for r in xrange(n)])
+                B = Matrix([[B for c in range(m)] for r in range(n)])
         if B.nrows!=n or B.ncols!=m:
             raise ArithmeticError('incompatible dimensions')
         C = Matrix(n,m)
-        for r in xrange(n):
-            for c in xrange(m):
+        for r in range(n):
+            for c in range(m):
                 C[r,c] = A[r,c]+B[r,c]
         return C
 
@@ -883,8 +883,8 @@ class Matrix(object):
         if B.nrows!=n or B.ncols!=m:
             raise ArithmeticError('Incompatible dimensions')
         C = Matrix(n,m)
-        for r in xrange(n):
-            for c in xrange(m):
+        for r in range(n):
+            for c in range(m):
                 C[r,c] = A[r,c]-B[r,c]
         return C
     def __radd__(A,B): #B+A
@@ -898,8 +898,8 @@ class Matrix(object):
         "multiplies a number of matrix A by a scalar number x"
         import copy
         M = copy.deepcopy(A)
-        for r in xrange(M.nrows):
-            for c in xrange(M.ncols):
+        for r in range(M.nrows):
+            for c in range(M.ncols):
                  M[r,c] *= x
         return M
 
@@ -911,13 +911,13 @@ class Matrix(object):
             return B*A
         elif A.ncols == 1 and B.ncols==1 and A.nrows == B.nrows:
             # try a scalar product ;-)
-            return sum(A[r,0]*B[r,0] for r in xrange(A.nrows))
+            return sum(A[r,0]*B[r,0] for r in range(A.nrows))
         elif A.ncols!=B.nrows:
             raise ArithmeticError('Incompatible dimension')
         M = Matrix(A.nrows,B.ncols)
-        for r in xrange(A.nrows):
-            for c in xrange(B.ncols):
-                for k in xrange(A.ncols):
+        for r in range(A.nrows):
+            for c in range(B.ncols):
+                for k in range(A.ncols):
                     M[r,c] += A[r,k]*B[k,c]
         return M
 
@@ -927,11 +927,11 @@ class Matrix(object):
         n = A.ncols
         if A.nrows != n:
            raise ArithmeticError('matrix not squared')
-        indexes = xrange(n)
+        indexes = range(n)
         A = copy.deepcopy(A)
         B = Matrix.identity(n,x)
         for c in indexes:
-            for r in xrange(c+1,n):
+            for r in range(c+1,n):
                 if abs(A[r,c])>abs(A[c,c]):
                     A.swap_rows(r,c)
                     B.swap_rows(r,c)
@@ -939,7 +939,7 @@ class Matrix(object):
             for k in indexes:
                 A[c,k] = A[c,k]/p
                 B[c,k] = B[c,k]/p
-            for r in range(0,c)+range(c+1,n):
+            for r in list(range(0,c))+list(range(c+1,n)):
                 p = 0.0 + A[r,c] # trick to make sure it is not integer
                 for k in indexes:
                     A[r,k] -= A[c,k]*p
@@ -966,16 +966,16 @@ class Matrix(object):
 
 def is_almost_symmetric(A, ap=1e-6, rp=1e-4):
     if A.nrows != A.ncols: return False
-    for r in xrange(A.nrows):
-        for c in xrange(r):
+    for r in range(A.nrows):
+        for c in range(r):
             delta = abs(A[r,c]-A[c,r])
             if delta>ap and delta>max(abs(A[r,c]),abs(A[c,r]))*rp:
                 return False
     return True
 
 def is_almost_zero(A, ap=1e-6, rp=1e-4):
-    for r in xrange(A.nrows):
-        for c in xrange(A.ncols):
+    for r in range(A.nrows):
+        for c in range(A.ncols):
             delta = abs(A[r,c]-A[c,r])
             if delta>ap and delta>max(abs(A[r,c]),abs(A[c,r]))*rp:
                 return False
@@ -987,12 +987,12 @@ def norm(A,p=1):
     elif isinstance(A,Matrix):
         if A.nrows==1 or A.ncols==1:
              return sum(norm(A[r,c])**p \
-                for r in xrange(A.nrows) \
-                for c in xrange(A.ncols))**(1.0/p)
+                for r in range(A.nrows) \
+                for c in range(A.ncols))**(1.0/p)
         elif p==1:
              return max([sum(norm(A[r,c]) \
-                for r in xrange(A.nrows)) \
-                for c in xrange(A.ncols)])
+                for r in range(A.nrows)) \
+                for c in range(A.ncols)])
         else:
              raise NotImplementedError
     else:
@@ -1009,7 +1009,7 @@ def condition_number(f,x=None,h=1e-6):
 def exp(x,ap=1e-6,rp=1e-4,ns=40):
     if isinstance(x,Matrix):
        t = s = Matrix.identity(x.ncols)
-       for k in xrange(1,ns):
+       for k in range(1,ns):
            t = t*x/k   # next term
            s = s + t   # add next term
            if norm(t)<max(ap,norm(s)*rp): return s
@@ -1024,18 +1024,18 @@ def Cholesky(A):
     if not is_almost_symmetric(A):
         raise ArithmeticError('not symmetric')
     L = copy.deepcopy(A)
-    for k in xrange(L.ncols):
+    for k in range(L.ncols):
         if L[k,k]<=0:
             raise ArithmeticError('not positive definite')
         p = L[k,k] = math.sqrt(L[k,k])
-        for i in xrange(k+1,L.nrows):
+        for i in range(k+1,L.nrows):
             L[i,k] /= p
-        for j in xrange(k+1,L.nrows):
+        for j in range(k+1,L.nrows):
             p=float(L[j,k])
-            for i in xrange(k+1,L.nrows):
+            for i in range(k+1,L.nrows):
                 L[i,j] -= p*L[i,k]
-    for  i in xrange(L.nrows):
-        for j in xrange(i+1,L.ncols):
+    for  i in range(L.nrows):
+        for j in range(i+1,L.ncols):
             L[i,j]=0
     return L
 
@@ -1062,10 +1062,10 @@ def Markowitz(mu, A, r_free):
     >>> print ret, risk
     0.113915... 0.186747...
     """
-    x = Matrix([[0.0] for r in xrange(A.nrows)])
+    x = Matrix([[0.0] for r in range(A.nrows)])
     x = (1/A)*(mu - r_free)
-    x = x/sum(x[r,0] for r in xrange(x.nrows))
-    portfolio = [x[r,0] for r in xrange(x.nrows)]
+    x = x/sum(x[r,0] for r in range(x.nrows))
+    portfolio = [x[r,0] for r in range(x.nrows)]
     portfolio_return = mu*x
     portfolio_risk = sqrt(x*(A*x))
     return portfolio, portfolio_return, portfolio_risk
@@ -1089,10 +1089,10 @@ def fit_least_squares(points, f):
         else: return sum(func(x)*c[i,0] for i,func in enumerate(f))
     A = Matrix(len(points),len(f))
     b = Matrix(len(points))
-    for i in xrange(A.nrows):
+    for i in range(A.nrows):
         weight = 1.0/points[i][2] if len(points[i])>2 else 1.0
         b[i,0] = weight*float(points[i][1])
-        for j in xrange(A.ncols):
+        for j in range(A.ncols):
             A[i,j] = weight*f[j](float(points[i][0]))
     c = (1.0/(A.T*A))*(A.T*b)
     chi = A*c-b
@@ -1103,7 +1103,7 @@ def fit_least_squares(points, f):
 
 # examples of fitting functions
 def POLYNOMIAL(n):
-    return [(lambda x, p=p: x**p) for p in xrange(n+1)]
+    return [(lambda x, p=p: x**p) for p in range(n+1)]
 CONSTANT  = POLYNOMIAL(0)
 LINEAR    = POLYNOMIAL(1)
 QUADRATIC = POLYNOMIAL(2)
@@ -1131,7 +1131,7 @@ class Trader:
 
     def simulate(self,data,cash=1000.0,shares=0.0,daily_rate=0.03/360):
         "find fitting parameters that optimize the trading strategy"
-        for t in xrange(len(data)):
+        for t in range(len(data)):
             suggestion = self.strategy(data[:t])
             today_close = data[t-1]['adjusted_close']
             # and we buy or sell based on our strategy
@@ -1163,14 +1163,14 @@ def Jacobi_eigenvalues(A,checkpoint=False):
     """
     def maxind(M,k):
         j=k+1
-        for i in xrange(k+2,M.ncols):
+        for i in range(k+2,M.ncols):
             if abs(M[k,i])>abs(M[k,j]):
                j=i
         return j
     n = A.nrows
     if n!=A.ncols:
         raise ArithmeticError('matrix not squared')
-    indexes = xrange(n)
+    indexes = range(n)
     S = Matrix(n,n, fill=lambda r,c: float(A[r,c]))
     E = Matrix.identity(n)
     state = n
@@ -1181,7 +1181,7 @@ def Jacobi_eigenvalues(A,checkpoint=False):
     while state:
         if checkpoint: checkpoint('rotating vectors (%i) ...' % iteration)
         m=0
-        for k in xrange(1,n-1):
+        for k in range(1,n-1):
             if abs(S[k,ind[k]])>abs(S[m,ind[m]]): m=k
             pass
         k,h = m,ind[m]
@@ -1206,18 +1206,18 @@ def Jacobi_eigenvalues(A,checkpoint=False):
             changed[h],state = False,state-1
         elif (not changed[h]) and y!=e[h]:
             changed[h],state = True,state+1
-        for i in xrange(k):
+        for i in range(k):
             S[i,k],S[i,h] = c*S[i,k]-s*S[i,h],s*S[i,k]+c*S[i,h]
-        for i in xrange(k+1,h):
+        for i in range(k+1,h):
             S[k,i],S[i,h] = c*S[k,i]-s*S[i,h],s*S[k,i]+c*S[i,h]
-        for i in xrange(h+1,n):
+        for i in range(h+1,n):
             S[k,i],S[h,i] = c*S[k,i]-s*S[h,i],s*S[k,i]+c*S[h,i]
         for i in indexes:
             E[k,i],E[h,i] = c*E[k,i]-s*E[h,i],s*E[k,i]+c*E[h,i]
         ind[k],ind[h]=maxind(S,k),maxind(S,h)
         iteration+=1
     # sort vectors
-    for i in xrange(1,n):
+    for i in range(1,n):
         j=i
         while j>0 and e[j-1]>e[j]:
             e[j],e[j-1] = e[j-1],e[j]
@@ -1236,7 +1236,7 @@ def compute_correlation(stocks, key='arithmetic_return'):
     # find trading days common to all stocks
     days = set()
     nstocks = len(stocks)
-    iter_stocks = xrange(nstocks)
+    iter_stocks = range(nstocks)
     for stock in stocks:
          if not days: days=set(x['date'] for x in stock)
          else: days=days.intersection(set(x['date'] for x in stock))
@@ -1246,11 +1246,11 @@ def compute_correlation(stocks, key='arithmetic_return'):
     for stock in stocks:
         v.append([x[key] for x in stock if x['date'] in days])
     # compute mean returns (skip first day, data not reliable)
-    mus = [sum(v[i][k] for k in xrange(1,n))/n for i in iter_stocks]
+    mus = [sum(v[i][k] for k in range(1,n))/n for i in iter_stocks]
     # fill in the covariance matrix
-    var = [sum(v[i][k]**2 for k in xrange(1,n))/n - mus[i]**2 for i in iter_stocks]
+    var = [sum(v[i][k]**2 for k in range(1,n))/n - mus[i]**2 for i in iter_stocks]
     corr = Matrix(nstocks,nstocks,fill=lambda i,j: \
-             (sum(v[i][k]*v[j][k] for k in xrange(1,n))/n - mus[i]*mus[j])/ \
+             (sum(v[i][k]*v[j][k] for k in range(1,n))/n - mus[i]*mus[j])/ \
              math.sqrt(var[i]*var[j]))
     return corr
 
@@ -1258,7 +1258,7 @@ def invert_minimum_residual(f,x,ap=1e-4,rp=1e-4,ns=200):
     import copy
     y = copy.copy(x)
     r = x-1.0*f(x)
-    for k in xrange(ns):
+    for k in range(ns):
         q = f(r)
         alpha = (q*r)/(q*q)
         y = y + alpha*r
@@ -1275,7 +1275,7 @@ def invert_bicgstab(f,x,ap=1e-4,rp=1e-4,ns=200):
     p = 0.0
     s = 0.0
     rho_old = alpha = omega = 1.0
-    for k in xrange(ns):
+    for k in range(ns):
         rho = q*r
         beta = (rho/rho_old)*(alpha/omega)
         rho_old = rho
@@ -1294,7 +1294,7 @@ def invert_bicgstab(f,x,ap=1e-4,rp=1e-4,ns=200):
 def solve_fixed_point(f, x, ap=1e-6, rp=1e-4, ns=100):
     def g(x): return f(x)+x # f(x)=0 <=> g(x)=x
     Dg = D(g)
-    for k in xrange(ns):
+    for k in range(ns):
         if abs(Dg(x)) >= 1:
             raise ArithmeticError('error D(g)(x)>=1')
         (x_old, x) = (x, g(x))
@@ -1308,7 +1308,7 @@ def solve_bisection(f, a, b, ap=1e-6, rp=1e-4, ns=100):
     if fb == 0: return b
     if fa*fb > 0:
         raise ArithmeticError('f(a) and f(b) must have opposite sign')
-    for k in xrange(ns):
+    for k in range(ns):
         x = (a+b)/2
         fx = f(x)
         if fx==0 or norm(b-a)<max(ap,norm(x)*rp): return x
@@ -1318,7 +1318,7 @@ def solve_bisection(f, a, b, ap=1e-6, rp=1e-4, ns=100):
 
 def solve_newton(f, x, ap=1e-6, rp=1e-4, ns=20):
     x = float(x) # make sure it is not int
-    for k in xrange(ns):
+    for k in range(ns):
         (fx, Dfx) = (f(x), D(f)(x))
         if norm(Dfx) < ap:
             raise ArithmeticError('unstable solution')
@@ -1329,7 +1329,7 @@ def solve_newton(f, x, ap=1e-6, rp=1e-4, ns=20):
 def solve_secant(f, x, ap=1e-6, rp=1e-4, ns=20):
     x = float(x) # make sure it is not int
     (fx, Dfx) = (f(x), D(f)(x))
-    for k in xrange(ns):
+    for k in range(ns):
         if norm(Dfx) < ap:
             raise ArithmeticError('unstable solution')
         (x_old, fx_old,x) = (x, fx, x-fx/Dfx)
@@ -1344,7 +1344,7 @@ def optimize_bisection(f, a, b, ap=1e-6, rp=1e-4, ns=100):
 def optimize_newton(f, x, ap=1e-6, rp=1e-4, ns=20):
     x = float(x) # make sure it is not int
     (f, Df) = (D(f), DD(f))
-    for k in xrange(ns):
+    for k in range(ns):
         (fx, Dfx) = (f(x), Df(x))
         if Dfx==0: return x
         if norm(Dfx) < ap:
@@ -1357,7 +1357,7 @@ def optimize_secant(f, x, ap=1e-6, rp=1e-4, ns=100):
     x = float(x) # make sure it is not int
     (f, Df) = (D(f), DD(f))
     (fx, Dfx) = (f(x), Df(x))
-    for k in xrange(ns):
+    for k in range(ns):
         if fx==0: return x
         if norm(Dfx) < ap:
             raise ArithmeticError('unstable solution')
@@ -1372,7 +1372,7 @@ def optimize_golden_search(f, a, b, ap=1e-6, rp=1e-4, ns=100):
     tau = (sqrt(5.0)-1.0)/2.0
     x1, x2 = a+(1.0-tau)*(b-a), a+tau*(b-a)
     fa, f1, f2, fb = f(a), f(x1), f(x2), f(b)
-    for k in xrange(ns):
+    for k in range(ns):
         if f1 > f2:
             a, fa, x1, f1 = x1, f1, x2, f2
             x2 = a+tau*(b-a)
@@ -1392,7 +1392,7 @@ def partial(f,i,h=1e-4):
         x[i] -= 2*h
         f_minus = f(x)
         if isinstance(f_plus,(list,tuple)):
-            return [(f_plus[i]-f_minus[i])/(2*h) for i in xrange(len(f_plus))]
+            return [(f_plus[i]-f_minus[i])/(2*h) for i in range(len(f_plus))]
         else:
             return (f_plus-f_minus)/(2*h)
     return df
@@ -1404,7 +1404,7 @@ def hessian(f, x, h=1e-4):
     return Matrix(len(x),len(x),fill=lambda r,c: partial(partial(f,r,h),c,h)(x))
 
 def jacobian(f, x, h=1e-4):
-    partials = [partial(f,c,h)(x) for c in xrange(len(x))]
+    partials = [partial(f,c,h)(x) for c in range(len(x))]
     return Matrix(len(partials[0]),len(x),fill=lambda r,c: partials[c][r])
 
 def solve_newton_multi(f, x, ap=1e-6, rp=1e-4, ns=20):
@@ -1419,7 +1419,7 @@ def solve_newton_multi(f, x, ap=1e-6, rp=1e-4, ns=20):
     """
     n = len(x)
     x = Matrix(len(x))
-    for k in xrange(ns):
+    for k in range(ns):
         fx = Matrix(f(x.flatten()))
         J = jacobian(f,x.flatten())
         if norm(J) < ap:
@@ -1439,7 +1439,7 @@ def optimize_newton_multi(f, x, ap=1e-6, rp=1e-4, ns=20):
     Returns x, which maximizes of minimizes f(x)=0, as a list
     """
     x = Matrix(list(x))
-    for k in xrange(ns):
+    for k in range(ns):
         (grad,H) = (gradient(f,x.flatten()), hessian(f,x.flatten()))
         if norm(H) < ap:
             raise ArithmeticError('unstable solution')
@@ -1459,7 +1459,7 @@ def optimize_newton_multi_imporved(f, x, ap=1e-6, rp=1e-4, ns=20, h=10.0):
     """
     x = Matrix(list(x))
     fx = f(x.flatten())
-    for k in xrange(ns):
+    for k in range(ns):
         (grad,H) = (gradient(f,x.flatten()), hessian(f,x.flatten()))
         if norm(H) < ap:
             raise ArithmeticError('unstable solution')
@@ -1492,7 +1492,7 @@ def fit(data, fs, b=None, ap=1e-6, rp=1e-4, ns=200, constraint=None):
     else:
         na = len(fs)
         def core(b,data=data,fs=fs):
-            A = Matrix([[fs[k](b,x)/dy for k in xrange(na)] \
+            A = Matrix([[fs[k](b,x)/dy for k in range(na)] \
                                   for (x,y,dy) in data])
             z = Matrix([[y/dy] for (x,y,dy) in data])
             a = (1/(A.T*A))*(A.T*z)
@@ -1516,7 +1516,7 @@ def integrate_naive(f, a, b, n=20):
     """
     a,b= float(a),float(b)
     h = (b-a)/n
-    return h/2*(f(a)+f(b))+h*sum(f(a+h*i) for i in xrange(1,n))
+    return h/2*(f(a)+f(b))+h*sum(f(a+h*i) for i in range(1,n))
 
 def integrate(f, a, b, ap=1e-4, rp=1e-4, ns=20):
     """
@@ -1524,7 +1524,7 @@ def integrate(f, a, b, ap=1e-4, rp=1e-4, ns=20):
     converges to precision
     """
     I = integrate_naive(f,a,b,1)
-    for k in xrange(1,ns):
+    for k in range(1,ns):
         I_old, I = I, integrate_naive(f,a,b,2**k)
         if k>2 and norm(I-I_old)<max(ap,norm(I)*rp): return I
     raise ArithmeticError('no convergence')
@@ -1544,13 +1544,13 @@ class QuadratureIntegrator:
         w = self.w
         order = len(w.rows)
         h = float(b-a)/(order-1)
-        return (b-a)*sum(w[i,0]*f(a+i*h) for i in xrange(order))
+        return (b-a)*sum(w[i,0]*f(a+i*h) for i in range(order))
 
 def integrate_quadrature_naive(f,a,b,n=20,order=4):
     a,b = float(a),float(b)
     h = float(b-a)/n
     q = QuadratureIntegrator(order=order)
-    return sum(q.integrate(f,a+i*h,a+i*h+h) for i in xrange(n))
+    return sum(q.integrate(f,a+i*h,a+i*h+h) for i in range(n))
 
 def E(f,S): return float(sum(f(x) for x in S))/(len(S) or 1)
 def mean(X): return E(lambda x:x, X)
@@ -1558,7 +1558,7 @@ def variance(X): return E(lambda x:x**2, X) - E(lambda x:x, X)**2
 def sd(X): return sqrt(variance(X))
 
 def covariance(X,Y):
-    return sum(X[i]*Y[i] for i in xrange(len(X)))/len(X) - mean(X)*mean(Y)
+    return sum(X[i]*Y[i] for i in range(len(X)))/len(X) - mean(X)*mean(Y)
 def correlation(X,Y):
     return covariance(X,Y)/sd(X)/sd(Y)
 
@@ -1566,11 +1566,11 @@ class MCG(object):
     def __init__(self,seed,a=66539,m=2**31):
         self.x = seed
         self.a, self.m = a, m
-    def next(self):
+    def __next__(self):
         self.x = (self.a*self.x) % self.m
         return self.x
     def random(self):
-        return float(self.next())/self.m
+        return float(next(self))/self.m
 
 class MarsenneTwister(object):
     """
@@ -1581,7 +1581,7 @@ class MarsenneTwister(object):
     def __init__(self,seed=4357):
         self.w = []   # the array for the state vector
         self.w.append(seed & 0xffffffff)
-        for i in xrange(1, 625):
+        for i in range(1, 625):
             self.w.append((69069 * self.w[i-1]) & 0xffffffff)
         self.wi = i
     def random(self):
@@ -1591,11 +1591,11 @@ class MarsenneTwister(object):
         K = [0x0, 0x9908b0df]
         y = 0
         if wi >= N:
-            for kk in xrange((N-M) + 1):
+            for kk in range((N-M) + 1):
                 y = (w[kk]&U)|(w[kk+1]&L)
                 w[kk] = w[kk+M] ^ (y >> 1) ^ K[y & 0x1]
 
-            for kk in xrange(kk, N):
+            for kk in range(kk, N):
                 y = (w[kk]&U)|(w[kk+1]&L)
                 w[kk] = w[kk+(M-N)] ^ (y >> 1) ^ K[y & 0x1]
             y = (w[N-1]&U)|(w[0]&L)
@@ -1611,7 +1611,7 @@ class MarsenneTwister(object):
 
 def leapfrog(mcg,k):
     a = mcg.a**k % mcg.m
-    return [MCG(mcg.next(),a,mcg.m) for i in range(k)]
+    return [MCG(next(mcg),a,mcg.m) for i in range(k)]
 
 class RandomSource(object):
     def __init__(self,generator=None):
@@ -1630,7 +1630,7 @@ class RandomSource(object):
         return 1 if self.random()<p else 0
 
     def lookup(self,table, epsilon=1e-6):
-        if isinstance(table,dict): table = table.items()
+        if isinstance(table,dict): table = list(table.items())
         u = self.random()
         for key,p in table:
             if u<p+epsilon:
@@ -1641,7 +1641,7 @@ class RandomSource(object):
     def binomial(self,n,p,epsilon=1e-6):
         u = self.random()
         q = (1.0-p)**n
-        for k in xrange(n+1):
+        for k in range(n+1):
             if u<q+epsilon:
                 return k
             else:
@@ -1727,12 +1727,12 @@ def confidence_intervals(mu,sigma):
         return x/norm,y/norm,z/norm
 
 def resample(S,size=None):
-    return [random.choice(S) for i in xrange(size or len(S))]
+    return [random.choice(S) for i in range(size or len(S))]
 
 def bootstrap(x, confidence=0.68, nsamples=100):
     """Computes the bootstrap errors of the input list."""
     def mean(S): return float(sum(x for x in S))/len(S)
-    means = [mean(resample(x)) for k in xrange(nsamples)]
+    means = [mean(resample(x)) for k in range(nsamples)]
     means.sort()
     left_tail = int(((1.0-confidence)/2)*nsamples)
     right_tail = nsamples-1-left_tail
@@ -1751,7 +1751,7 @@ class MCEngine:
         self.results = []
         s1=s2=0.0
         self.convergence=False
-        for k in xrange(1,ns):
+        for k in range(1,ns):
             x = self.simulate_once()
             self.results.append(x)
             s1 += x
