@@ -34,6 +34,15 @@ class TestNLib(unittest.TestCase):
             for expected_member, result_member in zip(expected_list, result_list):
                 self.assertAlmostEqual(expected_member, result_member, places=1)
 
+    def test084(self):
+        bases = 'ATGC'
+        from random import choice
+        genes = [''.join(choice(bases) for k in range(10)) for i in range(20)]
+        chromosome1 = ''.join(choice(genes) for i in range(10))
+        chromosome2 = ''.join(choice(genes) for i in range(10))
+        z = nlib.needleman_wunsch(chromosome1, chromosome2)
+        nlib.Canvas(title='Needleman-Wunsch').imshow(z).save('images/needleman.png')
+
 
 if __name__ == '__main__':
     unittest.main()

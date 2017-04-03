@@ -2087,20 +2087,6 @@ def test083():
     pass
 
 
-def test084():
-    """
-    >>> bases = 'ATGC'
-    >>> from random import choice
-    >>> genes = [''.join(choice(bases) for k in xrange(10)) for i in xrange(20)]
-    >>> chromosome1 = ''.join(choice(genes) for i in xrange(10))
-    >>> chromosome2 = ''.join(choice(genes) for i in xrange(10))
-    >>> z = needleman_wunsch(chromosome1, chromosome2)
-    >>> Canvas(title='Needleman-Wunsch').imshow(z).save('images/needleman.png')
-    
-    """
-    pass
-
-
 def test085():
     """
     >>> def metric(a,b):
