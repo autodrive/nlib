@@ -7,8 +7,12 @@ class Chromosome(object):
     M. D. Pierro, Annotated Algorithms in Python with Applications in Physics, Biology, and Finance,
     ISBN 978-89-6540-105-6.
     """
+    # class variables ###########################
+    # vocabulary of genes
     alphabet = 'ATGC'
+    # length of gene
     size = 32
+    # number of mutations
     mutations = 2
 
     # methods
